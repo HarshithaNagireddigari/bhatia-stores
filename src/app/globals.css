@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+/* Smooth transitions for theme switching */
+html {
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Smooth transitions for all theme-related properties */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color;
+  transition-duration: 0.15s;
+  transition-timing-function: ease;
+}
+
+/* Prevent transitions on page load */
+.no-transitions * {
+  transition: none !important;
+}

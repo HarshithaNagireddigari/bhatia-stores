@@ -1,0 +1,68 @@
+import {
+  pgTable,
+  text,
+  timestamp,
+  integer,
+  numeric,
+  pgEnum,
+} from "drizzle-orm/pg-core";
+
+export const roleEnum = pgEnum("role", ["admin", "customer"]);
+
+export const orderStatusEnum = pgEnum("order_status", [
+  "pending",
+  "confirmed",
+  "shipped",
+  "delivered",
+  "cancelled",
+]);
+
+export const users = pgTable("users", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  role: roleEnum("role").notNull().default("customer"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const products = pgTable("products", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+  image: text("image").notNull(),
+  category: text("category").notNull(),
+  stock: integer("stock").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const orders = pgTable("orders", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id),
+  customerName: text("customer_name").notNull(),
+  customerEmail: text("customer_email").notNull(),
+  address: text("address").notNull(),
+  city: text("city").notNull(),
+  phone: text("phone").notNull(),
+  status: orderStatusEnum("status").notNull().default("pending"),
+  total: numeric("total", { precision: 10, scale: 2 }).notNull(),
+  razorpayPaymentId: text("razorpay_payment_id"),
+  razorpayOrderId: text("razorpay_order_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const orderItems = pgTable("order_items", {
+  id: text("id").primaryKey(),
+  orderId: text("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  productId: text("product_id")
+    .notNull()
+    .references(() => products.id),
+  productName: text("product_name").notNull(),
+  quantity: integer("quantity").notNull().default(1),
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+});
