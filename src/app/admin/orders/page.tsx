@@ -163,9 +163,11 @@ export default function AdminOrdersPage() {
                         Payment
                       </h4>
                       <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                        {order.razorpayPaymentId
-                          ? `Razorpay ID: ${order.razorpayPaymentId}`
-                          : "Not paid yet"}
+                        {order.razorpayPaymentId === "cash_on_delivery"
+                          ? "Cash on Delivery — collect payment on delivery"
+                          : order.razorpayPaymentId
+                            ? `Razorpay payment ID: ${order.razorpayPaymentId}`
+                            : "Not paid yet"}
                       </p>
                     </div>
                     <div>

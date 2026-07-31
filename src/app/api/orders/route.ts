@@ -8,6 +8,7 @@ import { inArray } from "drizzle-orm";
 import { products } from "@/db/schema";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { isRateLimited } from "@/lib/rate-limit";
+import { sendOrderNotifications } from "@/lib/order-email";
 
 export async function GET() {
   const user = await getSessionUser();
@@ -97,6 +98,14 @@ export async function POST(req: Request) {
     }
 
     const created = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+    void sendOrderNotifications({
+      id: orderId,
+      customerName,
+      customerEmail,
+      total: total.toString(),
+      paymentMethod,
+      items: verifiedItems.map(({ product, quantity }) => ({ productName: product.name, quantity, price: product.price })),
+    }).catch((error) => console.error("Order notification error:", error));
     return NextResponse.json(created[0], { status: 201 });
   } catch (error) {
     console.error("Create order error:", error);

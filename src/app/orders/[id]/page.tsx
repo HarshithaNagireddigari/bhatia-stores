@@ -85,6 +85,7 @@ export default function OrderDetailPage({
   }
 
   const currentStep = order.status === "cancelled" ? -1 : statusSteps.indexOf(order.status);
+  const isCashOnDelivery = order.razorpayPaymentId === "cash_on_delivery";
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
@@ -204,7 +205,13 @@ export default function OrderDetailPage({
         <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
           <h3 className="font-semibold text-gray-900 dark:text-white">Payment</h3>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            {order.razorpayPaymentId ? (
+            {isCashOnDelivery ? (
+              <>
+                Cash on Delivery
+                <br />
+                Pay ₹{parseFloat(order.total).toFixed(2)} when your order is delivered
+              </>
+            ) : order.razorpayPaymentId ? (
               <>
                 Paid via Razorpay
                 <br />

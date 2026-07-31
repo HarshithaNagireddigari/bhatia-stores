@@ -170,15 +170,23 @@ export default function AdminProductsPage() {
             Manage Products
           </h1>
         </div>
-        <button
-          onClick={() => {
-            resetForm();
-            setShowForm(!showForm);
-          }}
-          className="rounded-full bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
-        >
-          {showForm ? "Cancel" : "+ Add Product"}
-        </button>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin/orders"
+            className="rounded-full border border-indigo-200 px-5 py-2.5 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-950"
+          >
+            Manage Orders
+          </Link>
+          <button
+            onClick={() => {
+              resetForm();
+              setShowForm(!showForm);
+            }}
+            className="rounded-full bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
+          >
+            {showForm ? "Cancel" : "+ Add Product"}
+          </button>
+        </div>
       </div>
 
       {/* Add/Edit Form */}
