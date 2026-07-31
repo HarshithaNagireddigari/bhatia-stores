@@ -4,8 +4,19 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 const SESSION_COOKIE = "bhatia_session";
+
+function sessionSecret() {
+  const secret = process.env.SESSION_SECRET || process.env.DATABASE_URL;
+  if (!secret) throw new Error("SESSION_SECRET or DATABASE_URL is required");
+  return secret;
+}
+
+function signSession(value: string) {
+  return createHmac("sha256", sessionSecret()).update(value).digest("base64url");
+}
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
@@ -55,9 +66,13 @@ export async function getSessionUser(): Promise<{
   const session = cookieStore.get(SESSION_COOKIE);
   if (!session?.value) return null;
   try {
-    const decoded = JSON.parse(
-      Buffer.from(session.value, "base64").toString("utf-8")
-    );
+    const [value, signature] = session.value.split(".");
+    if (!value || !signature) return null;
+    const expected = signSession(value);
+    if (signature.length !== expected.length || !timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+      return null;
+    }
+    const decoded = JSON.parse(Buffer.from(value, "base64url").toString("utf-8"));
     const user = await db
       .select()
       .from(users)
@@ -77,7 +92,8 @@ export async function getSessionUser(): Promise<{
 
 export async function setSessionCookie(userId: string) {
   const cookieStore = await cookies();
-  const token = Buffer.from(JSON.stringify({ id: userId })).toString("base64");
+  const value = Buffer.from(JSON.stringify({ id: userId })).toString("base64url");
+  const token = `${value}.${signSession(value)}`;
   cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

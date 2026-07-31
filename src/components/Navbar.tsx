@@ -33,11 +33,15 @@ export default function Navbar() {
           >
             Shop
           </Link>
+          <Link href="/wishlist" aria-label="Wishlist" className="relative rounded-full p-2 text-gray-700 transition hover:bg-gray-100 hover:text-indigo-600 dark:text-gray-300 dark:hover:bg-gray-800">
+            ♡
+          </Link>
           <Link
             href="/cart"
-            className="relative text-sm font-medium text-gray-700 transition hover:text-indigo-600 dark:text-gray-300 dark:hover:text-indigo-400"
+            aria-label="Cart"
+            className="relative rounded-full p-2 text-gray-700 transition hover:bg-gray-100 hover:text-indigo-600 dark:text-gray-300 dark:hover:bg-gray-800"
           >
-            Cart
+            🛒
             {itemCount > 0 && (
               <span className="absolute -right-4 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">
                 {itemCount}
@@ -108,6 +112,7 @@ export default function Navbar() {
         <div className="border-t border-gray-200 px-4 pb-4 dark:border-gray-700 md:hidden">
           <div className="flex flex-col gap-3 pt-3">
             <Link href="/shop" className="text-sm font-medium text-gray-700 dark:text-gray-300" onClick={() => setMobileOpen(false)}>Shop</Link>
+            <Link href="/wishlist" className="text-sm font-medium text-gray-700 dark:text-gray-300" onClick={() => setMobileOpen(false)}>♡ Wishlist</Link>
             <Link href="/cart" className="text-sm font-medium text-gray-700 dark:text-gray-300" onClick={() => setMobileOpen(false)}>
               Cart {itemCount > 0 && `(${itemCount})`}
             </Link>

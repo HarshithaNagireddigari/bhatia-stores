@@ -33,6 +33,7 @@ export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "cod">("razorpay");
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -41,7 +42,6 @@ export default function CheckoutPage() {
     city: "",
   });
   const [scriptLoaded, setScriptLoaded] = useState(false);
-  const [keyId, setKeyId] = useState("");
 
   useEffect(() => {
     // Load Razorpay script
@@ -52,14 +52,6 @@ export default function CheckoutPage() {
       setScriptLoaded(true);
     };
     document.body.appendChild(script);
-
-    // Get key ID
-    fetch("/api/razorpay", { method: "POST", body: JSON.stringify({ amount: 1 }) })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.keyId) setKeyId(data.keyId);
-      })
-      .catch(() => {});
 
     return () => {
       if (script.parentNode) script.parentNode.removeChild(script);
@@ -88,11 +80,28 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
+      if (paymentMethod === "cod") {
+        const orderRes = await fetch("/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+            customerName: form.name, customerEmail: form.email, address: form.address,
+            city: form.city, phone: form.phone, paymentMethod: "cod",
+          }),
+        });
+        if (!orderRes.ok) throw new Error((await orderRes.json()).error || "Order creation failed");
+        clearCart();
+        toast.success("Cash on Delivery order placed successfully!");
+        router.push("/orders");
+        return;
+      }
+
       // Create Razorpay order
       const rpRes = await fetch("/api/razorpay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: total }),
+        body: JSON.stringify({ items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })) }),
       });
 
       if (!rpRes.ok) {
@@ -106,7 +115,7 @@ export default function CheckoutPage() {
       }
 
       const options: RazorpayOptions = {
-        key: rpData.keyId || keyId,
+        key: rpData.keyId,
         amount: rpData.amount,
         currency: rpData.currency || "INR",
         name: "Bhatia Stores",
@@ -129,9 +138,10 @@ export default function CheckoutPage() {
               address: form.address,
               city: form.city,
               phone: form.phone,
-              total,
+              paymentMethod: "razorpay",
               razorpayPaymentId: response.razorpay_payment_id,
               razorpayOrderId: response.razorpay_order_id,
+              razorpaySignature: response.razorpay_signature,
             }),
           });
 
@@ -181,6 +191,20 @@ export default function CheckoutPage() {
               placeholder="John Doe"
             />
           </div>
+
+          <fieldset>
+            <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300">Payment method *</legend>
+            <div className="mt-2 space-y-2 rounded-xl border border-gray-300 p-3 dark:border-gray-600">
+              <label className="flex cursor-pointer items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                <input type="radio" name="paymentMethod" checked={paymentMethod === "razorpay"} onChange={() => setPaymentMethod("razorpay")} />
+                Pay securely online with Razorpay
+              </label>
+              <label className="flex cursor-pointer items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                <input type="radio" name="paymentMethod" checked={paymentMethod === "cod"} onChange={() => setPaymentMethod("cod")} />
+                Cash on Delivery
+              </label>
+            </div>
+          </fieldset>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Email *

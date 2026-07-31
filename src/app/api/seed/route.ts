@@ -4,8 +4,16 @@ import { users, products } from "@/db/schema";
 import { hashPassword } from "@/lib/auth";
 import { v4 as uuidv4 } from "uuid";
 import { eq } from "drizzle-orm";
+import { getSessionUser } from "@/lib/auth";
 
 export async function GET() {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  const user = await getSessionUser();
+  if (!user || user.role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   try {
     // Check if already seeded
     const existingAdmin = await db

@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/CartContext";
+import { useWishlist } from "@/components/WishlistContext";
 import { toast } from "sonner";
 
 interface Product {
@@ -31,6 +32,7 @@ export default function ProductPage({
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCart();
+  const { toggleItem, hasItem } = useWishlist();
 
   function addProductToCart() {
     if (!product) return;
@@ -169,6 +171,9 @@ export default function ProductPage({
                 className="rounded-full bg-indigo-600 px-8 py-3 font-semibold text-white transition hover:bg-indigo-700"
               >
                 Add to Cart
+              </button>
+              <button onClick={() => toggleItem({ productId: product.id, name: product.name, price: parseFloat(product.price), image: product.image, quantity: 1 })} className="rounded-full border border-rose-400 px-5 py-3 font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30">
+                {hasItem(product.id) ? "♥ Saved" : "♡ Add to Wishlist"}
               </button>
               <button
                 onClick={() => {

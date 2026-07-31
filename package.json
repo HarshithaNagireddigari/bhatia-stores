@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@marsidev/react-turnstile": "^1.5.4",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.10.0",
     "dotenv": "17.3.1",

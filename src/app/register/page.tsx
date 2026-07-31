@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -8,7 +8,24 @@ import { toast } from "sonner";
 export default function RegisterPage() {
   const router = useRouter();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [captchaQuestion, setCaptchaQuestion] = useState("");
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
   const [loading, setLoading] = useState(false);
+
+  async function loadCaptcha() {
+    try {
+      const res = await fetch("/api/auth/captcha", { cache: "no-store" });
+      const data = await res.json();
+      setCaptchaQuestion(data.question || "");
+      setCaptchaAnswer("");
+    } catch {
+      toast.error("Could not load human verification");
+    }
+  }
+
+  useEffect(() => {
+    loadCaptcha();
+  }, []);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -21,12 +38,13 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, captchaAnswer }),
       });
       const data = await res.json();
 
       if (!res.ok) {
         toast.error(data.error || "Registration failed");
+        loadCaptcha();
         return;
       }
 
@@ -93,9 +111,36 @@ export default function RegisterPage() {
             />
           </div>
 
+          <div>
+            <div className="flex items-center justify-between gap-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Human verification *
+              </label>
+              <button
+                type="button"
+                onClick={loadCaptcha}
+                className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+              >
+                New question
+              </button>
+            </div>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {captchaQuestion || "Loading question..."}
+            </p>
+            <input
+              type="number"
+              inputMode="numeric"
+              value={captchaAnswer}
+              onChange={(e) => setCaptchaAnswer(e.target.value)}
+              required
+              className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              placeholder="Your answer"
+            />
+          </div>
+
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !captchaQuestion}
             className="w-full rounded-full bg-indigo-600 py-3 font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
           >
             {loading ? "Creating account..." : "Register"}

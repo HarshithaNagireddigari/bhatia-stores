@@ -2,44 +2,42 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-interface Order {
+interface Product {
   id: string;
-  status: string;
-  total: string;
-  customerName: string;
-  createdAt: string;
+  name: string;
+  description: string;
+  price: string;
+  image: string;
+  category: string;
+  stock: number;
 }
 
-export default function AdminDashboard() {
-  const router = useRouter();
-  const [user, setUser] = useState<{ name: string; role: string } | null>(null);
-  const [orders, setOrders] = useState<Order[]>([]);
+export default function AdminProductsPage() {
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<Product | null>(null);
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    price: "",
+    image: "",
+    category: "Electronics",
+    stock: "10",
+  });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchUser();
-    fetchOrders();
+    fetchProducts();
   }, []);
 
-  async function fetchUser() {
-    const res = await fetch("/api/auth/me");
-    const data = await res.json();
-    if (!data.user || data.user.role !== "admin") {
-      router.push("/login");
-      return;
-    }
-    setUser(data.user);
-  }
-
-  async function fetchOrders() {
+  async function fetchProducts() {
     try {
-      const res = await fetch("/api/orders");
-      if (!res.ok) throw new Error("");
+      const res = await fetch("/api/products");
       const data = await res.json();
-      setOrders(Array.isArray(data) ? data : []);
+      setProducts(Array.isArray(data) ? data : []);
     } catch {
       // ignore
     } finally {
@@ -47,142 +45,317 @@ export default function AdminDashboard() {
     }
   }
 
-  async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    toast.success("Logged out");
-    router.push("/");
-    router.refresh();
+  function resetForm() {
+    setForm({ name: "", description: "", price: "", image: "", category: "Electronics", stock: "10" });
+    setEditing(null);
+    setShowForm(false);
   }
 
-  const pendingOrders = orders.filter((o) => o.status === "pending");
-  const totalRevenue = orders
-    .filter((o) => o.status !== "cancelled")
-    .reduce((sum, o) => sum + parseFloat(o.total), 0);
-
-  if (!user) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-4 border-indigo-600 border-t-transparent rounded-full" />
-      </div>
-    );
+  function startEdit(product: Product) {
+    setEditing(product);
+    setForm({
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      image: product.image,
+      category: product.category,
+      stock: product.stock.toString(),
+    });
+    setShowForm(true);
   }
+
+  async function handleImageChange(
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      toast.loading("Uploading image...", {
+        id: "upload",
+      });
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Upload failed");
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        image: data.imageUrl,
+      }));
+
+      toast.success("Image uploaded successfully!", {
+        id: "upload",
+      });
+    } catch (error: any) {
+      console.error(error);
+
+      toast.error(error?.message || "Image upload failed", {
+        id: "upload",
+      });
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.name || !form.description || !form.price) {
+      toast.error("Name, description, and price are required");
+      return;
+    }
+    setSaving(true);
+
+    try {
+      if (editing) {
+        const res = await fetch(`/api/products/${editing.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        });
+        if (!res.ok) throw new Error();
+        toast.success("Product updated!");
+      } else {
+        const res = await fetch("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        });
+        if (!res.ok) throw new Error();
+        toast.success("Product created!");
+      }
+      resetForm();
+      fetchProducts();
+    } catch {
+      toast.error("Failed to save product");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteProduct(id: string) {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+    try {
+      const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      toast.success("Product deleted!");
+      fetchProducts();
+    } catch {
+      toast.error("Failed to delete product");
+    }
+  }
+
+  const categories = ["Electronics", "Clothing", "Home & Kitchen", "Books", "Sports", "Beauty"];
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Admin Dashboard
+          <Link
+            href="/admin"
+            className="text-sm text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
+          >
+            ← Back to Dashboard
+          </Link>
+          <h1 className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
+            Manage Products
           </h1>
-          <p className="text-gray-500 dark:text-gray-400">
-            Welcome, {user.name}
-          </p>
         </div>
         <button
-          onClick={handleLogout}
-          className="rounded-full border border-gray-300 px-6 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+          onClick={() => {
+            resetForm();
+            setShowForm(!showForm);
+          }}
+          className="rounded-full bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
         >
-          Logout
+          {showForm ? "Cancel" : "+ Add Product"}
         </button>
       </div>
 
-      {/* Stats */}
-      <div className="mt-8 grid gap-6 md:grid-cols-3">
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Total Orders</p>
-          <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
-            {loading ? "..." : orders.length}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Pending Orders</p>
-          <p className="mt-1 text-3xl font-bold text-yellow-600 dark:text-yellow-400">
-            {loading ? "..." : pendingOrders.length}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Total Revenue</p>
-          <p className="mt-1 text-3xl font-bold text-green-600 dark:text-green-400">
-            {loading ? "..." : `₹${totalRevenue.toFixed(2)}`}
-          </p>
-        </div>
-      </div>
-
-      {/* Quick Links */}
-      <div className="mt-8 grid gap-4 md:grid-cols-2">
-        <Link
-          href="/admin/products"
-          className="rounded-2xl border border-gray-200 bg-white p-6 transition hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
+      {/* Add/Edit Form */}
+      {showForm && (
+        <form
+          onSubmit={handleSubmit}
+          className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800"
         >
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            📦 Manage Products
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {editing ? "Edit Product" : "New Product"}
           </h2>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Add, edit, or remove products from the store.
-          </p>
-        </Link>
-        <Link
-          href="/admin/orders"
-          className="rounded-2xl border border-gray-200 bg-white p-6 transition hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
-        >
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            📋 Manage Orders
-          </h2>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            View and update order statuses.
-          </p>
-        </Link>
-      </div>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name *</label>
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
+                className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Price (₹) *</label>
+              <input
+                type="number"
+                step="0.01"
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                required
+                className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              />
+            </div>
 
-      {/* Recent Orders */}
-      <div className="mt-10">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          Recent Orders
-        </h2>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Description *
+              </label>
+              <textarea
+                value={form.description}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+                rows={4}
+                required
+                className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                placeholder="Enter product description"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Product Image
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              />
+              {form.image && (
+                <div className="mt-3 flex items-center gap-3">
+                  <img
+                    src={form.image}
+                    alt="Preview"
+                    className="h-32 w-32 rounded-lg object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, image: "" })}
+                    className="rounded-lg px-3 py-1 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+              <select
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              >
+                {categories.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Stock</label>
+              <input
+                type="number"
+                value={form.stock}
+                onChange={(e) => setForm({ ...form, stock: e.target.value })}
+                className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            disabled={saving}
+            className="mt-6 rounded-full bg-indigo-600 px-8 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {saving ? "Saving..." : editing ? "Update Product" : "Create Product"}
+          </button>
+        </form>
+      )}
+
+      {/* Products Table */}
+      <div className="mt-8 overflow-x-auto">
         {loading ? (
-          <div className="mt-4 animate-pulse space-y-3">
+          <div className="animate-pulse space-y-3">
             {[1, 2, 3].map((i) => (
               <div key={i} className="h-16 rounded-xl bg-gray-200 dark:bg-gray-700" />
             ))}
           </div>
-        ) : orders.length === 0 ? (
-          <p className="mt-4 text-gray-500 dark:text-gray-400">No orders yet.</p>
+        ) : products.length === 0 ? (
+          <p className="text-center text-gray-500 dark:text-gray-400 py-10">
+            No products yet. Click &ldquo;Add Product&rdquo; to create one.
+          </p>
         ) : (
-          <div className="mt-4 space-y-3">
-            {orders.slice(0, 5).map((order) => (
-              <Link
-                key={order.id}
-                href={`/admin/orders`}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-750"
-              >
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {order.customerName}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    #{order.id.slice(0, 8)} &middot;{" "}
-                    {new Date(order.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                    ₹{parseFloat(order.total).toFixed(2)}
-                  </span>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${
-                      order.status === "pending"
-                        ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                        : order.status === "delivered"
-                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                        : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                    }`}
-                  >
-                    {order.status}
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-gray-200 dark:border-gray-700">
+                <th className="py-3 pr-4 font-medium text-gray-500 dark:text-gray-400">Product</th>
+                <th className="py-3 pr-4 font-medium text-gray-500 dark:text-gray-400">Category</th>
+                <th className="py-3 pr-4 font-medium text-gray-500 dark:text-gray-400">Price</th>
+                <th className="py-3 pr-4 font-medium text-gray-500 dark:text-gray-400">Stock</th>
+                <th className="py-3 font-medium text-gray-500 dark:text-gray-400">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.map((product) => (
+                <tr key={product.id} className="border-b border-gray-100 dark:border-gray-800">
+                  <td className="py-3 pr-4">
+                    <div className="flex items-center gap-3">
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="h-10 w-10 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <span className="text-2xl">🛒</span>
+                      )}
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {product.name}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{product.category}</td>
+                  <td className="py-3 pr-4 font-medium text-gray-900 dark:text-white">
+                    ₹{parseFloat(product.price).toFixed(2)}
+                  </td>
+                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{product.stock}</td>
+                  <td className="py-3">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => startEdit(product)}
+                        className="rounded-lg px-3 py-1 text-xs font-medium text-indigo-600 transition hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/30"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => deleteProduct(product.id)}
+                        className="rounded-lg px-3 py-1 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
     </div>
