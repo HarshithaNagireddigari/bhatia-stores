@@ -15,6 +15,10 @@ interface Product {
   stock: number;
 }
 
+function isProductImage(image: string) {
+  return image.startsWith("/") || image.startsWith("http") || image.startsWith("data:image/");
+}
+
 export default function ShopPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,12 +47,7 @@ export default function ShopPage() {
 
   const categories = [
     "All",
-    "Electronics",
-    "Clothing",
-    "Home & Kitchen",
-    "Books",
-    "Sports",
-    "Beauty",
+    "Tiles & Sanitaryware",
   ];
 
   return (
@@ -106,9 +105,17 @@ export default function ShopPage() {
             >
               <Link href={`/product/${product.id}`}>
                 <div className="relative h-48 overflow-hidden bg-gray-100 dark:bg-gray-700">
-                  <div className="flex h-full items-center justify-center text-6xl">
-                    {product.image}
-                  </div>
+                  {isProductImage(product.image) ? (
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-6xl">
+                      {product.image}
+                    </div>
+                  )}
                 </div>
               </Link>
               <div className="flex flex-1 flex-col p-4">

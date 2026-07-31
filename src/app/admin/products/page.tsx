@@ -14,11 +14,9 @@ interface Product {
   stock: number;
 }
 
-const EMOJI_OPTIONS = [
-  "📱", "💻", "⌚", "🎧", "📷", "🎮",
-  "👕", "👗", "👟", "👜", "💄", "🧴",
-  "📚", "🏠", "🍳", "⚽", "🏀", "🎸",
-];
+function isProductImage(image: string) {
+  return image.startsWith("/") || image.startsWith("http") || image.startsWith("data:image/");
+}
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -29,7 +27,7 @@ export default function AdminProductsPage() {
     name: "",
     description: "",
     price: "",
-    image: "📱",
+    image: "",
     category: "Electronics",
     stock: "10",
   });
@@ -52,7 +50,7 @@ export default function AdminProductsPage() {
   }
 
   function resetForm() {
-    setForm({ name: "", description: "", price: "", image: "📱", category: "Electronics", stock: "10" });
+    setForm({ name: "", description: "", price: "", image: "", category: "Electronics", stock: "10" });
     setEditing(null);
     setShowForm(false);
   }
@@ -68,6 +66,37 @@ export default function AdminProductsPage() {
       stock: product.stock.toString(),
     });
     setShowForm(true);
+  }
+
+  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be smaller than 5MB");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      toast.loading("Uploading image...", { id: "upload" });
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+
+      setForm((prev) => ({ ...prev, image: data.imageUrl }));
+      toast.success("Image uploaded successfully!", { id: "upload" });
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Image upload failed", {
+        id: "upload",
+      });
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -117,7 +146,7 @@ export default function AdminProductsPage() {
     }
   }
 
-  const categories = ["Electronics", "Clothing", "Home & Kitchen", "Books", "Sports", "Beauty"];
+  const categories = ["Tiles & Sanitaryware"];
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -175,16 +204,35 @@ export default function AdminProductsPage() {
                 className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               />
             </div>
+
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description *</label>
-              <textarea
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                required
-                rows={2}
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Product Image
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
                 className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               />
+              {form.image && (
+                <div className="mt-3 flex items-center gap-3">
+                  <img
+                    src={form.image}
+                    alt="Preview"
+                    className="h-32 w-32 rounded-lg object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, image: "" })}
+                    className="rounded-lg px-3 py-1 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
               <select
@@ -205,25 +253,6 @@ export default function AdminProductsPage() {
                 onChange={(e) => setForm({ ...form, stock: e.target.value })}
                 className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Icon (Emoji)</label>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {EMOJI_OPTIONS.map((emoji) => (
-                  <button
-                    key={emoji}
-                    type="button"
-                    onClick={() => setForm({ ...form, image: emoji })}
-                    className={`rounded-lg border p-2 text-2xl transition ${
-                      form.image === emoji
-                        ? "border-indigo-600 bg-indigo-50 dark:border-indigo-400 dark:bg-indigo-900/30"
-                        : "border-gray-200 hover:border-gray-300 dark:border-gray-600 dark:hover:border-gray-500"
-                    }`}
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
           <button
@@ -264,7 +293,15 @@ export default function AdminProductsPage() {
                 <tr key={product.id} className="border-b border-gray-100 dark:border-gray-800">
                   <td className="py-3 pr-4">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">{product.image}</span>
+                      {isProductImage(product.image) ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="h-10 w-10 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <span className="text-2xl">🛒</span>
+                      )}
                       <span className="font-medium text-gray-900 dark:text-white">
                         {product.name}
                       </span>

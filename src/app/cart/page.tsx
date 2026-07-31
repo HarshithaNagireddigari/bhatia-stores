@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { useCart } from "@/components/CartContext";
 
+function isProductImage(image: string) {
+  return image.startsWith("/") || image.startsWith("http") || image.startsWith("data:image/");
+}
+
 export default function CartPage() {
   const { items, updateQuantity, removeItem, total, itemCount } = useCart();
 
@@ -41,8 +45,12 @@ export default function CartPage() {
             key={item.productId}
             className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
           >
-            <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-gray-100 text-3xl dark:bg-gray-700">
-              {item.image}
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-xl bg-gray-100 text-3xl dark:bg-gray-700">
+              {isProductImage(item.image) ? (
+                <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+              ) : (
+                item.image
+              )}
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-gray-900 dark:text-white">
