@@ -25,8 +25,13 @@ async function sendEmail(to: string, subject: string, html: string) {
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({ from, to: [to], subject, html }),
   });
-  if (!response.ok) throw new Error(`Email provider returned ${response.status}`);
-}
+  const text = await response.text();
+console.log("Resend response:", response.status, text);
+
+if (!response.ok) {
+  throw new Error(text);
+}}
+
 
 export async function sendOrderNotifications(order: OrderEmail) {
   const adminEmail = process.env.ORDER_NOTIFICATION_EMAIL;
