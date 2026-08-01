@@ -1,170 +1,363 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { desc } from "drizzle-orm";
-import { db } from "@/db";
-import { products } from "@/db/schema";
+import { toast } from "sonner";
 
-export const dynamic = "force-dynamic";
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  image: string;
+  category: string;
+  stock: number;
+}
 
-export default async function HomePage() {
-  const newProducts = await db
-    .select()
-    .from(products)
-    .orderBy(desc(products.createdAt))
-    .limit(4);
+export default function AdminProductsPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<Product | null>(null);
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    price: "",
+    image: "",
+    category: "Electronics",
+    stock: "10",
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  async function fetchProducts() {
+    try {
+      const res = await fetch("/api/products");
+      const data = await res.json();
+      setProducts(Array.isArray(data) ? data : []);
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function resetForm() {
+    setForm({ name: "", description: "", price: "", image: "", category: "Electronics", stock: "10" });
+    setEditing(null);
+    setShowForm(false);
+  }
+
+  function startEdit(product: Product) {
+    setEditing(product);
+    setForm({
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      image: product.image,
+      category: product.category,
+      stock: product.stock.toString(),
+    });
+    setShowForm(true);
+  }
+
+  async function handleImageChange(
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      toast.loading("Uploading image...", {
+        id: "upload",
+      });
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Upload failed");
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        image: data.imageUrl,
+      }));
+
+      toast.success("Image uploaded successfully!", {
+        id: "upload",
+      });
+    } catch (error: any) {
+      console.error(error);
+
+      toast.error(error?.message || "Image upload failed", {
+        id: "upload",
+      });
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.name || !form.description || !form.price) {
+      toast.error("Name, description, and price are required");
+      return;
+    }
+    setSaving(true);
+
+    try {
+      if (editing) {
+        const res = await fetch(`/api/products/${editing.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        });
+        if (!res.ok) throw new Error();
+        toast.success("Product updated!");
+      } else {
+        const res = await fetch("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        });
+        if (!res.ok) throw new Error();
+        toast.success("Product created!");
+      }
+      resetForm();
+      fetchProducts();
+    } catch {
+      toast.error("Failed to save product");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteProduct(id: string) {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+    try {
+      const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      toast.success("Product deleted!");
+      fetchProducts();
+    } catch {
+      toast.error("Failed to delete product");
+    }
+  }
+
+  const categories = ["Electronics", "Clothing", "Home & Kitchen", "Books", "Sports", "Beauty"];
 
   return (
-    <div>
-      {/* Hero Section */}
-      <section className="relative flex min-h-[85vh] flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 px-6 py-20 text-center text-white">
-        <div className="absolute inset-0 bg-black/20" />
-        <div className="relative z-10 max-w-3xl">
-          <span className="inline-block rounded-full bg-white/20 px-4 py-1 text-sm font-medium backdrop-blur">
-            🚀 Now Launching
-          </span>
-          <h1 className="mt-6 text-5xl font-extrabold leading-tight tracking-tight md:text-7xl">
-            Build spaces you&apos;ll love to come home to.
+    <div className="mx-auto max-w-6xl px-4 py-10">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <Link
+            href="/admin"
+            className="text-sm text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
+          >
+            ← Back to Dashboard
+          </Link>
+          <h1 className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
+            Manage Products
           </h1>
-          <p className="mt-4 text-xl text-white/80 md:text-2xl">
-            Premium tiles and sanitaryware with clear prices, expert guidance and dependable delivery.
-          </p>
-          <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <Link
-              href="/shop"
-              className="rounded-full bg-white px-8 py-3 font-semibold text-indigo-600 shadow-lg transition hover:bg-gray-100 hover:shadow-xl"
-            >
-              Explore New Arrivals
-            </Link>
-            <Link
-              href="https://wa.me/919984979720"
-              className="rounded-full border-2 border-white px-8 py-3 font-semibold text-white transition hover:bg-white/10"
-            >
-              WhatsApp Us
-            </Link>
-          </div>
         </div>
-      </section>
+        <button
+          onClick={() => {
+            resetForm();
+            setShowForm(!showForm);
+          }}
+          className="rounded-full bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
+        >
+          {showForm ? "Cancel" : "+ Add Product"}
+        </button>
+      </div>
 
-      {/* New launches */}
-      <section className="bg-white py-16 dark:bg-gray-900">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <span className="text-sm font-semibold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
-                Fresh arrivals
-              </span>
-              <h2 className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                Launching New Products
-              </h2>
-              <p className="mt-2 text-gray-600 dark:text-gray-400">
-                Explore the latest additions to our tile and sanitaryware collection.
-              </p>
-            </div>
-            <Link
-              href="/shop"
-              className="font-semibold text-indigo-600 transition hover:text-indigo-700 dark:text-indigo-400"
-            >
-              View all products →
-            </Link>
-          </div>
-
-          {newProducts.length > 0 ? (
-            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {newProducts.map((product) => (
-                <Link
-                  key={product.id}
-                  href={`/product/${product.id}`}
-                  className="group overflow-hidden rounded-2xl border border-gray-200 bg-white transition hover:-translate-y-1 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800"
-                >
-                  <div className="h-48 overflow-hidden bg-gray-100 dark:bg-gray-700">
-                    {product.image.startsWith("/") || product.image.startsWith("http") || product.image.startsWith("data:image/") ? (
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-6xl">{product.image}</div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                      New launch
-                    </p>
-                    <h3 className="mt-1 truncate font-semibold text-gray-900 dark:text-white">{product.name}</h3>
-                    <p className="mt-2 text-lg font-bold text-gray-900 dark:text-white">
-                      ₹{Number(product.price).toFixed(2)}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="mt-8 rounded-2xl border border-dashed border-gray-300 p-8 text-center text-gray-500 dark:border-gray-700 dark:text-gray-400">
-              New products will appear here as soon as they are added.
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="bg-white py-20 dark:bg-gray-900">
-        <div className="mx-auto max-w-7xl px-6">
-          <h2 className="text-center text-3xl font-bold text-gray-900 dark:text-white">
-            Why Bhatia Stores?
+      {/* Add/Edit Form */}
+      {showForm && (
+        <form
+          onSubmit={handleSubmit}
+          className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800"
+        >
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {editing ? "Edit Product" : "New Product"}
           </h2>
-          <div className="mt-12 grid gap-8 md:grid-cols-3">
-            {[
-              {
-                emoji: "🚚",
-                title: "Fast Delivery",
-                desc: "We deliver to your doorstep within 2-5 business days with real-time tracking.",
-              },
-              {
-                emoji: "🔒",
-                title: "Secure Payments",
-                desc: "Powered by Razorpay — your transactions are always safe and encrypted.",
-              },
-              {
-                emoji: "🌙",
-                title: "Dark & Light Mode",
-                desc: "Switch between dark and light mode with one click for your comfort.",
-              },
-            ].map((f) => (
-              <div
-                key={f.title}
-                className="rounded-2xl border border-gray-100 p-8 text-center transition hover:shadow-lg dark:border-gray-700 dark:bg-gray-800"
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name *</label>
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
+                className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Price (₹) *</label>
+              <input
+                type="number"
+                step="0.01"
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                required
+                className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Description *
+              </label>
+              <textarea
+                value={form.description}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+                rows={4}
+                required
+                className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                placeholder="Enter product description"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Product Image
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              />
+              {form.image && (
+                <div className="mt-3 flex items-center gap-3">
+                  <img
+                    src={form.image}
+                    alt="Preview"
+                    className="h-32 w-32 rounded-lg object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, image: "" })}
+                    className="rounded-lg px-3 py-1 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+              <select
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               >
-                <span className="text-4xl">{f.emoji}</span>
-                <h3 className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
-                  {f.title}
-                </h3>
-                <p className="mt-2 text-gray-500 dark:text-gray-400">{f.desc}</p>
-              </div>
+                {categories.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Stock</label>
+              <input
+                type="number"
+                value={form.stock}
+                onChange={(e) => setForm({ ...form, stock: e.target.value })}
+                className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            disabled={saving}
+            className="mt-6 rounded-full bg-indigo-600 px-8 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {saving ? "Saving..." : editing ? "Update Product" : "Create Product"}
+          </button>
+        </form>
+      )}
+
+      {/* Products Table */}
+      <div className="mt-8 overflow-x-auto">
+        {loading ? (
+          <div className="animate-pulse space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-16 rounded-xl bg-gray-200 dark:bg-gray-700" />
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Launch Banner */}
-      <section className="bg-indigo-50 py-16 dark:bg-indigo-950/30">
-        <div className="mx-auto max-w-7xl px-6 text-center">
-          <span className="text-sm font-semibold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
-            Grand Launch Offer
-          </span>
-          <h2 className="mt-3 text-4xl font-bold text-gray-900 dark:text-white">
-            Flat 20% Off on Your First Order
-          </h2>
-          <p className="mt-3 text-lg text-gray-600 dark:text-gray-400">
-            Use code <strong className="text-indigo-600 dark:text-indigo-400">BHATIA20</strong> at checkout
+        ) : products.length === 0 ? (
+          <p className="text-center text-gray-500 dark:text-gray-400 py-10">
+            No products yet. Click &ldquo;Add Product&rdquo; to create one.
           </p>
-          <Link
-            href="/shop"
-            className="mt-8 inline-block rounded-full bg-indigo-600 px-8 py-3 font-semibold text-white transition hover:bg-indigo-700"
-          >
-            Explore Products
-          </Link>
-        </div>
-      </section>
+        ) : (
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-gray-200 dark:border-gray-700">
+                <th className="py-3 pr-4 font-medium text-gray-500 dark:text-gray-400">Product</th>
+                <th className="py-3 pr-4 font-medium text-gray-500 dark:text-gray-400">Category</th>
+                <th className="py-3 pr-4 font-medium text-gray-500 dark:text-gray-400">Price</th>
+                <th className="py-3 pr-4 font-medium text-gray-500 dark:text-gray-400">Stock</th>
+                <th className="py-3 font-medium text-gray-500 dark:text-gray-400">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.map((product) => (
+                <tr key={product.id} className="border-b border-gray-100 dark:border-gray-800">
+                  <td className="py-3 pr-4">
+                    <div className="flex items-center gap-3">
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="h-10 w-10 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <span className="text-2xl">🛒</span>
+                      )}
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {product.name}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{product.category}</td>
+                  <td className="py-3 pr-4 font-medium text-gray-900 dark:text-white">
+                    ₹{parseFloat(product.price).toFixed(2)}
+                  </td>
+                  <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{product.stock}</td>
+                  <td className="py-3">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => startEdit(product)}
+                        className="rounded-lg px-3 py-1 text-xs font-medium text-indigo-600 transition hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/30"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => deleteProduct(product.id)}
+                        className="rounded-lg px-3 py-1 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }
