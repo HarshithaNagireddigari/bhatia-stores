@@ -3,16 +3,19 @@ import { getSessionUser } from "@/lib/auth";
 import { isRateLimited } from "@/lib/rate-limit";
 import { db } from "@/db";
 import { products } from "@/db/schema";
+import { paymentOrders } from "@/db/schema";
 import { inArray } from "drizzle-orm";
+import { v4 as uuidv4 } from "uuid";
 
 export async function POST(req: Request) {
   try {
     const user = await getSessionUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (isRateLimited(req, "checkout", 10, 15 * 60_000)) {
+    if (await isRateLimited(req, "checkout", 10, 15 * 60_000)) {
       return NextResponse.json({ error: "Too many checkout attempts. Please try again later." }, { status: 429 });
     }
-    const { items, currency = "INR" } = await req.json();
+    const { items } = await req.json();
+    const currency = "INR";
     if (!Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: "A non-empty cart is required" }, { status: 400 });
     }
@@ -22,12 +25,13 @@ export async function POST(req: Request) {
     }
     const catalog = await db.select().from(products).where(inArray(products.id, ids));
     if (catalog.length !== items.length) return NextResponse.json({ error: "A product is no longer available" }, { status: 400 });
-    const amount = items.reduce((sum, item) => {
+    const verifiedItems = items.map((item) => {
       const product = catalog.find((entry) => entry.id === item.productId)!;
       const quantity = Number(item.quantity);
       if (!Number.isInteger(quantity) || quantity < 1 || quantity > product.stock) throw new Error("Invalid cart quantity");
-      return sum + Number(product.price) * quantity;
-    }, 0);
+      return { productId: product.id, productName: product.name, quantity, price: product.price };
+    });
+    const amount = verifiedItems.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
 
     if (!Number.isFinite(amount) || amount <= 0) {
       return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
@@ -36,33 +40,32 @@ export async function POST(req: Request) {
     const keyId = process.env.RAZORPAY_KEY_ID || "";
     const keySecret = process.env.RAZORPAY_KEY_SECRET || "";
 
-    // Demo payments are only permitted outside production.
     if (!keyId || !keySecret) {
-      if (process.env.NODE_ENV === "production") {
-        return NextResponse.json({ error: "Payments are not configured" }, { status: 503 });
-      }
-      const mockOrderId = `order_demo_${Date.now()}`;
-      return NextResponse.json({
-        orderId: mockOrderId,
-        amount: Math.round(amount * 100),
-        currency,
-        keyId: "rzp_test_demo_key",
-        demo: true,
-      });
+      return NextResponse.json({ error: "Payments are not configured" }, { status: 503 });
     }
 
     // Dynamic import to avoid build-time errors
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const Razorpay = require("razorpay");
     const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
 
+    const paymentOrderId = uuidv4();
+    const amountPaise = Math.round(amount * 100);
     const options = {
-      amount: Math.round(amount * 100),
+      amount: amountPaise,
       currency,
-      receipt: `receipt_${Date.now()}`,
+      receipt: `receipt_${paymentOrderId}`,
     };
 
     const order = await razorpay.orders.create(options);
+    await db.insert(paymentOrders).values({
+      id: paymentOrderId,
+      razorpayOrderId: order.id,
+      userId: user.id,
+      amountPaise,
+      currency,
+      items: verifiedItems,
+      expiresAt: new Date(Date.now() + 30 * 60_000),
+    });
 
     return NextResponse.json({
       orderId: order.id,

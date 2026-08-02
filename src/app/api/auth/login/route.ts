@@ -5,7 +5,7 @@ import { isRateLimited } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   try {
-    if (isRateLimited(req, "login", 5, 15 * 60_000)) {
+    if (await isRateLimited(req, "login", 5, 15 * 60_000)) {
       return NextResponse.json({ error: "Too many login attempts. Please try again later." }, { status: 429 });
     }
     const { email, password, captchaAnswer } = await req.json();

@@ -5,6 +5,7 @@ import {
   integer,
   numeric,
   pgEnum,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 export const roleEnum = pgEnum("role", ["admin", "customer"]);
@@ -65,4 +66,34 @@ export const orderItems = pgTable("order_items", {
   productName: text("product_name").notNull(),
   quantity: integer("quantity").notNull().default(1),
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+});
+
+export const sessions = pgTable("sessions", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const paymentOrders = pgTable("payment_orders", {
+  id: text("id").primaryKey(),
+  razorpayOrderId: text("razorpay_order_id").notNull().unique(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  amountPaise: integer("amount_paise").notNull(),
+  currency: text("currency").notNull(),
+  items: jsonb("items").notNull(),
+  status: text("status").notNull().default("created"),
+  razorpayPaymentId: text("razorpay_payment_id").unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const rateLimits = pgTable("rate_limits", {
+  key: text("key").primaryKey(),
+  count: integer("count").notNull(),
+  resetAt: timestamp("reset_at").notNull(),
 });

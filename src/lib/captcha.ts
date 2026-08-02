@@ -33,7 +33,7 @@ export async function createCaptchaChallenge() {
   cookieStore.set(CAPTCHA_COOKIE, `${value}.${sign(value)}`, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "strict",
     path: "/",
     maxAge: CAPTCHA_MAX_AGE,
   });
