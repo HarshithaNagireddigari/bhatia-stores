@@ -8,12 +8,16 @@ import { eq } from "drizzle-orm";
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const category = searchParams.get("category");
+  const search = searchParams.get("search")?.trim().toLowerCase().slice(0, 100);
 
   let query = db.select().from(products).orderBy(products.createdAt);
-  if (category) {
-    // we'll filter in JS for simplicity
+  if (category || search) {
     const all = await query;
-    return NextResponse.json(all.filter((p) => p.category === category));
+    return NextResponse.json(all.filter((p) => {
+      const inCategory = !category || p.category === category;
+      const searchable = `${p.name} ${p.description} ${p.category}`.toLowerCase();
+      return inCategory && (!search || searchable.includes(search));
+    }));
   }
 
   const all = await query;

@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/components/CartContext";
 import { toast } from "sonner";
+import { Search, X } from "lucide-react";
 
 interface Product {
   id: string;
@@ -23,39 +25,68 @@ export default function ShopPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const search = searchParams.get("search")?.trim() ?? "";
   const { addItem } = useCart();
 
   useEffect(() => {
-    fetchProducts();
-  }, [category]);
-
-  async function fetchProducts() {
-    setLoading(true);
-    try {
-      const url = category
-        ? `/api/products?category=${encodeURIComponent(category)}`
-        : "/api/products";
-      const res = await fetch(url);
-      const data = await res.json();
-      setProducts(Array.isArray(data) ? data : []);
-    } catch {
-      setProducts([]);
-    } finally {
-      setLoading(false);
+    async function fetchProducts() {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (category) params.set("category", category);
+        if (search) params.set("search", search);
+        const url = params.size ? `/api/products?${params.toString()}` : "/api/products";
+        const res = await fetch(url);
+        const data = await res.json();
+        setProducts(Array.isArray(data) ? data : []);
+      } catch {
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
     }
-  }
+    void fetchProducts();
+  }, [category, search]);
 
   const categories = [
     "All",
     "Tiles & Sanitaryware",
   ];
 
+  function submitSearch(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const value = String(new FormData(event.currentTarget).get("search") ?? "").trim();
+    const params = new URLSearchParams();
+    if (value) params.set("search", value);
+    if (category) params.set("category", category);
+    router.replace(params.size ? `/shop?${params.toString()}` : "/shop");
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Shop</h1>
 
-      {/* Category filter */}
-      <div className="mt-6 flex flex-wrap gap-2">
+      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <form onSubmit={submitSearch} className="relative w-full sm:max-w-md">
+          <Search aria-hidden size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            key={search}
+            name="search"
+            defaultValue={search}
+            placeholder="Search by tile, collection or style"
+            className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-10 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:border-gray-700 dark:bg-gray-800 dark:focus:ring-indigo-950"
+          />
+          {search && (
+            <button type="button" onClick={() => router.replace(category ? `/shop?category=${encodeURIComponent(category)}` : "/shop")} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+              <X size={18} />
+            </button>
+          )}
+        </form>
+
+        {/* Category filter */}
+        <div className="flex flex-wrap gap-2">
         {categories.map((cat) => (
           <button
             key={cat}
@@ -69,6 +100,7 @@ export default function ShopPage() {
             {cat}
           </button>
         ))}
+        </div>
       </div>
 
       {/* Products grid */}
@@ -88,7 +120,7 @@ export default function ShopPage() {
       ) : products.length === 0 ? (
         <div className="mt-20 text-center">
           <p className="text-lg text-gray-500 dark:text-gray-400">
-            No products found. {category && "Try changing the category."}
+            No products found. {(category || search) && "Try changing your search or category."}
           </p>
           {!category && (
             <p className="mt-2 text-sm text-gray-400 dark:text-gray-500">

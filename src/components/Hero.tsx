@@ -37,12 +37,12 @@ const ROTATE_MS = 6000;
 
 const CATEGORIES = [
   {
-    id: "tiles",
-    label: "Floor Tiles",
-    count: "128 Products",
+    id: "marble",
+    label: "Marble Look",
+    count: "Tile Collection",
     icon: LayoutGrid,
     // Real product photography — cropped from the Bhatia Stores tile catalogue.
-    image: "/images/hero-tiles.jpg",
+    image: "/products/catalog/bhatia-catalogue-02.jpg",
     eyebrow: "The 2026 Tile Edit",
     headlineTop: "Crafting Beautiful Homes,",
     headlineAccent: "one tile at a time.",
@@ -53,31 +53,31 @@ const CATEGORIES = [
     ],
   },
   {
-    id: "sanitaryware",
-    label: "Sanitaryware",
-    count: "84 Products",
+    id: "contemporary",
+    label: "Modern Tiles",
+    count: "Tile Collection",
     icon: Bath,
     // TODO: swap for a real Bhatia Stores product/room photo — placeholder until supplied.
-    image: "/images/hero-sanitaryware.jpg",
-    eyebrow: "The 2026 Bath Edit",
-    headlineTop: "Transform Every Space",
-    headlineAccent: "with premium sanitaryware.",
-    copy: "Wall-hung basins, rimless WCs, and rain showers designed around how you actually move through your morning.",
+    image: "/products/catalog/bhatia-catalogue-05.jpg",
+    eyebrow: "The 2026 Tile Edit",
+    headlineTop: "Give Every Room",
+    headlineAccent: "a signature surface.",
+    copy: "Discover contemporary tile designs with durable finishes, made for kitchens, living spaces, and bathrooms.",
     highlights: [
       { name: "Wall-Hung Basin", price: "₹6,499", rating: 4.9 },
       { name: "Rimless WC Suite", price: "₹11,299", rating: 4.8 },
     ],
   },
   {
-    id: "faucets",
-    label: "Faucets",
-    count: "63 Products",
+    id: "statement",
+    label: "Statement Walls",
+    count: "Tile Collection",
     icon: Droplets,
     // TODO: swap for a real Bhatia Stores product photo — placeholder until supplied.
-    image: "/images/hero-faucets.jpg",
-    eyebrow: "The 2026 Fittings Edit",
-    headlineTop: "Finishing Touches",
-    headlineAccent: "that feel like luxury.",
+    image: "/products/catalog/gnam-wall-06.jpg",
+    eyebrow: "The 2026 Wall Tile Edit",
+    headlineTop: "Make Your Walls",
+    headlineAccent: "the centre of attention.",
     copy: "Brass-bodied faucets in brushed gold, matte black, and polished chrome — built to outlast the renovation around them.",
     highlights: [
       { name: "Brushed Gold Faucet", price: "₹3,999", rating: 4.9 },

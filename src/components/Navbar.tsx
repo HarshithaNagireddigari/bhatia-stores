@@ -2,18 +2,29 @@
 
 import { useTheme } from "next-themes";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCart } from "./CartContext";
 import { useState, useEffect } from "react";
+import { Search } from "lucide-react";
 
 export default function Navbar() {
   const { theme, setTheme } = useTheme();
   const { itemCount } = useCart();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   useEffect(() => setMounted(true), []);
 
   if (!mounted) return null;
+
+  function submitSearch(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const query = search.trim();
+    router.push(query ? `/shop?search=${encodeURIComponent(query)}` : "/shop");
+    setMobileOpen(false);
+  }
 
   return (
     <nav className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur dark:border-gray-700 dark:bg-gray-900/80">
@@ -27,6 +38,16 @@ export default function Navbar() {
 
         {/* Desktop links */}
         <div className="hidden items-center gap-6 md:flex">
+          <form onSubmit={submitSearch} className="relative">
+            <Search aria-hidden size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              aria-label="Search products"
+              placeholder="Search tiles..."
+              className="w-40 rounded-full border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm outline-none transition focus:border-indigo-500 dark:border-gray-700 dark:bg-gray-800 md:w-48"
+            />
+          </form>
           <Link
             href="/shop"
             className="text-sm font-medium text-gray-700 transition hover:text-indigo-600 dark:text-gray-300 dark:hover:text-indigo-400"
@@ -111,6 +132,16 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="border-t border-gray-200 px-4 pb-4 dark:border-gray-700 md:hidden">
           <div className="flex flex-col gap-3 pt-3">
+            <form onSubmit={submitSearch} className="relative">
+              <Search aria-hidden size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                aria-label="Search products"
+                placeholder="Search tiles, designs, brands..."
+                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 dark:border-gray-700 dark:bg-gray-800"
+              />
+            </form>
             <Link href="/shop" className="text-sm font-medium text-gray-700 dark:text-gray-300" onClick={() => setMobileOpen(false)}>Shop</Link>
             <Link href="/wishlist" className="text-sm font-medium text-gray-700 dark:text-gray-300" onClick={() => setMobileOpen(false)}>♡ Wishlist</Link>
             <Link href="/cart" className="text-sm font-medium text-gray-700 dark:text-gray-300" onClick={() => setMobileOpen(false)}>
