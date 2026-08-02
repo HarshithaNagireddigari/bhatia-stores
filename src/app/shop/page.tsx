@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/components/CartContext";
@@ -21,7 +21,7 @@ function isProductImage(image: string) {
   return image.startsWith("/") || image.startsWith("http") || image.startsWith("data:image/");
 }
 
-export default function ShopPage() {
+function ShopContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("");
@@ -190,5 +190,21 @@ export default function ShopPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ShopPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-7xl px-4 py-10">
+          <p className="text-center text-gray-500">
+            Loading products...
+          </p>
+        </div>
+      }
+    >
+      <ShopContent />
+    </Suspense>
   );
 }
