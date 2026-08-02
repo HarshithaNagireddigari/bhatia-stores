@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/components/CartContext";
 import { useWishlist } from "@/components/WishlistContext";
@@ -26,7 +27,14 @@ export default function WishlistPage() {
           {items.map((item) => (
             <article key={item.productId} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
               <Link href={`/product/${item.productId}`} className="block">
-                <div className="flex h-36 items-center justify-center rounded-xl bg-gray-50 text-6xl dark:bg-gray-900">{item.image}</div>
+                <div className="relative h-36 overflow-hidden rounded-xl bg-gray-50 dark:bg-gray-900">
+                  <Image
+                    src={item.image || "/placeholder.png"}
+                    alt={item.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
                 <h2 className="mt-4 font-semibold text-gray-900 dark:text-white">{item.name}</h2>
                 <p className="mt-1 font-bold text-indigo-600">₹{item.price.toFixed(2)}</p>
               </Link>
