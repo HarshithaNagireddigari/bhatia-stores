@@ -6,7 +6,20 @@ import { WishlistProvider } from "@/components/WishlistContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Toaster } from "sonner";
+import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
+
+// Load fonts – Inter for body, Poppins for display/headings
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-body",
+});
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-display",
+});
 
 export const metadata: Metadata = {
   title: "Bhatia Stores - Your One-Stop Shop",
@@ -15,15 +28,21 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${inter.variable} ${poppins.variable}`}
+      suppressHydrationWarning
+    >
       <body className="bg-gray-50 text-gray-900 antialiased transition-colors dark:bg-gray-950 dark:text-gray-100">
         <ThemeProvider>
-          <CartProvider><WishlistProvider>
-            <Navbar />
-            <main className="min-h-screen">{children}</main>
-            <Footer />
-            <Toaster position="top-right" richColors />
-          </WishlistProvider></CartProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <Navbar />
+              <main className="min-h-screen">{children}</main>
+              <Footer />
+              <Toaster position="top-right" richColors />
+            </WishlistProvider>
+          </CartProvider>
         </ThemeProvider>
       </body>
     </html>

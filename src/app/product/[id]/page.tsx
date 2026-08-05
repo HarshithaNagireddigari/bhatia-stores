@@ -85,7 +85,7 @@ export default function ProductPage({
     return (
       <div className="mx-auto max-w-4xl px-4 py-20 text-center">
         <p className="text-lg text-gray-500 dark:text-gray-400">Product not found.</p>
-        <Link href="/shop" className="mt-4 inline-block text-indigo-600 hover:underline">
+        <Link href="/shop" className="mt-4 inline-block text-primary-600 hover:underline">
           Back to Shop
         </Link>
       </div>
@@ -96,7 +96,7 @@ export default function ProductPage({
     <div className="mx-auto max-w-6xl px-4 py-10">
       <Link
         href="/shop"
-        className="mb-6 inline-flex items-center text-sm text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
+        className="mb-6 inline-flex items-center text-sm text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
       >
         ← Back to Shop
       </Link>
@@ -117,7 +117,7 @@ export default function ProductPage({
 
         {/* Product info */}
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+          <span className="text-xs font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-400">
             {product.category}
           </span>
           <h1 className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
@@ -168,7 +168,7 @@ export default function ProductPage({
                   addProductToCart();
                   toast.success(`Added ${quantity} to cart!`);
                 }}
-                className="rounded-full bg-indigo-600 px-8 py-3 font-semibold text-white transition hover:bg-indigo-700"
+                className="rounded-full bg-primary-600 px-8 py-3 font-semibold text-white transition hover:bg-primary-700"
               >
                 Add to Cart
               </button>
@@ -180,13 +180,13 @@ export default function ProductPage({
                   addProductToCart();
                   router.push("/checkout");
                 }}
-                className="rounded-full border border-indigo-600 px-8 py-3 font-semibold text-indigo-600 transition hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+                className="rounded-full border border-primary-600 px-8 py-3 font-semibold text-primary-600 transition hover:bg-indigo-50 dark:text-primary-400 dark:hover:bg-indigo-950/40"
               >
                 Buy Now
               </button>
               <button
                 onClick={chatOnWhatsApp}
-                className="inline-flex items-center gap-2 rounded-full bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700"
+                className="inline-flex items-center gap-2 rounded-full bg-accent-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700"
                 aria-label="Chat about this product on WhatsApp"
               >
                 <svg className="h-5 w-5" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true">

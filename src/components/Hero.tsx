@@ -18,12 +18,10 @@ import {
   User,
 } from "lucide-react";
 
-// Display face: warm, high-contrast serif — the "catalogue" voice of the brand.
-// Body face: quiet, precise sans that stays out of the serif's way.
+// Font setup – using the newly added Inter (body) and Poppins (display) fonts.
 const fraunces = Fraunces({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
   variable: "--font-display",
 });
 
@@ -41,7 +39,6 @@ const CATEGORIES = [
     label: "Marble Look",
     count: "Tile Collection",
     icon: LayoutGrid,
-    // Real product photography — cropped from the Bhatia Stores tile catalogue.
     image: "/products/catalog/bhatia-catalogue-02.jpg",
     eyebrow: "The 2026 Tile Edit",
     headlineTop: "Crafting Beautiful Homes,",
@@ -57,7 +54,6 @@ const CATEGORIES = [
     label: "Modern Tiles",
     count: "Tile Collection",
     icon: Bath,
-    // TODO: swap for a real Bhatia Stores product/room photo — placeholder until supplied.
     image: "/products/catalog/bhatia-catalogue-05.jpg",
     eyebrow: "The 2026 Tile Edit",
     headlineTop: "Give Every Room",
@@ -73,7 +69,6 @@ const CATEGORIES = [
     label: "Statement Walls",
     count: "Tile Collection",
     icon: Droplets,
-    // TODO: swap for a real Bhatia Stores product photo — placeholder until supplied.
     image: "/products/catalog/gnam-wall-06.jpg",
     eyebrow: "The 2026 Wall Tile Edit",
     headlineTop: "Make Your Walls",
@@ -93,7 +88,7 @@ function RatingStars({ rating }: { rating: number }) {
         <Star
           key={i}
           size={10}
-          className={i < Math.round(rating) ? "fill-[#C9A24B] text-[#C9A24B]" : "text-white/20"}
+          className={i < Math.round(rating) ? "fill-primary-500 text-primary-500" : "text-neutral-300"}
         />
       ))}
     </div>
@@ -108,9 +103,7 @@ export default function Hero() {
 
   const active = CATEGORIES[activeIndex];
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => setMounted(true), []);
 
   const startRotation = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -120,9 +113,6 @@ export default function Hero() {
     }, ROTATE_MS);
   };
 
-  // Pauses auto-rotation while the visitor is hovering/focused on the
-  // category selector — so picking a finish doesn't feel like a race
-  // against the timer. startRotation() (on mouse/focus leave) resumes it.
   const pauseRotation = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
   };
@@ -138,14 +128,14 @@ export default function Hero() {
   function handleSelectCategory(index: number) {
     setHasInteracted(true);
     setActiveIndex(index);
-    startRotation(); // give the manually chosen category a full 6s before it moves on
+    startRotation();
   }
 
   return (
     <section
-      className={`${fraunces.variable} ${inter.variable} relative h-screen min-h-[760px] w-full overflow-hidden bg-[#0A0A0C] font-[var(--font-body)]`}
+      className={`${fraunces.variable} ${inter.variable} relative h-screen min-h-[760px] w-full overflow-hidden bg-neutral-dark font-[var(--font-body)]`}
     >
-      {/* Rotating background image — crossfades + a slow Ken Burns zoom while each slide is active */}
+      {/* Rotating background image */}
       <div className="absolute inset-0">
         <AnimatePresence mode="wait">
           <motion.div
@@ -159,89 +149,50 @@ export default function Hero() {
             }}
             className="absolute inset-0"
           >
-            <Image
-              src={active.image}
-              alt={active.label}
-              fill
-              // Only the very first paint is marked priority — later slides swap in on
-              // an interval and shouldn't compete with the LCP image for bandwidth.
-              priority={activeIndex === 0 && !hasInteracted}
-              sizes="100vw"
-              className="object-cover object-center"
-            />
+            <Image src={active.image} alt={active.label} fill className="object-cover object-center" priority={activeIndex === 0 && !hasInteracted} />
           </motion.div>
         </AnimatePresence>
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/20" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/10" />
+        {/* Dark overlay with subtle primary tint */}
+        <div className="absolute inset-0 bg-gradient-to-r from-neutral-dark/90 via-neutral-dark/60 to-neutral-dark/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-neutral-dark/70 via-transparent to-neutral-dark/10" />
       </div>
 
-      {/* Glass navbar */}
+      {/* Glass‑style header replaces previous navbar */}
       <motion.header
         initial={{ y: -16, opacity: 0 }}
         animate={mounted ? { y: 0, opacity: 1 } : {}}
         transition={{ duration: 0.6 }}
         className="absolute inset-x-0 top-6 z-30 mx-auto flex w-[94%] max-w-6xl items-center justify-between gap-4 rounded-full border border-white/10 bg-white/[0.06] px-5 py-3 backdrop-blur-xl"
       >
-        <span className="font-[var(--font-display)] text-lg tracking-[0.18em] text-[#F3EFE6]">
-          BHATIA
-        </span>
-
-        <nav className="hidden items-center gap-6 text-sm text-[#D8D5CC] lg:flex">
-          <a href="#collections" className="rounded-sm transition hover:text-[#C9A24B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A24B]">
-            Collections
-          </a>
-          <a href="#new-arrivals" className="rounded-sm transition hover:text-[#C9A24B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A24B]">
-            New Arrivals
-          </a>
-          <a href="#brands" className="rounded-sm transition hover:text-[#C9A24B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A24B]">
-            Brands
-          </a>
-          <a href="#offers" className="rounded-sm transition hover:text-[#C9A24B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A24B]">
-            Offers
-          </a>
-          <a href="#contact" className="rounded-sm transition hover:text-[#C9A24B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A24B]">
-            Contact
-          </a>
+        <span className="font-[var(--font-display)] text-lg tracking-[0.18em] text-white">BHATIA</span>
+        <nav className="hidden items-center gap-6 text-sm text-white lg:flex">
+          <a href="#collections" className="rounded-sm transition hover:text-primary">Collections</a>
+          <a href="#new-arrivals" className="rounded-sm transition hover:text-primary">New Arrivals</a>
+          <a href="#brands" className="rounded-sm transition hover:text-primary">Brands</a>
+          <a href="#offers" className="rounded-sm transition hover:text-primary">Offers</a>
+          <a href="#contact" className="rounded-sm transition hover:text-primary">Contact</a>
         </nav>
-
         <div className="flex items-center gap-2 sm:gap-3">
-          <a
-            href="#wishlist"
-            aria-label="Wishlist"
-            className="rounded-full p-2 text-[#D8D5CC] transition hover:bg-white/10 hover:text-[#C9A24B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A24B]"
-          >
+          <a href="#wishlist" aria-label="Wishlist" className="rounded-full p-2 text-white transition hover:bg-white/10 hover:text-primary">
             <Heart size={18} />
           </a>
-          <a
-            href="#cart"
-            aria-label="Cart"
-            className="relative rounded-full p-2 text-[#D8D5CC] transition hover:bg-white/10 hover:text-[#C9A24B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A24B]"
-          >
+          <a href="#cart" aria-label="Cart" className="relative rounded-full p-2 text-white transition hover:bg-white/10 hover:text-primary">
             <ShoppingCart size={18} />
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#C9A24B] text-[10px] font-semibold text-[#1A1508]">
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-neutral-dark">
               0
             </span>
           </a>
-          <a
-            href="#login"
-            aria-label="Login"
-            className="hidden rounded-full p-2 text-[#D8D5CC] transition hover:bg-white/10 hover:text-[#C9A24B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A24B] sm:inline-flex"
-          >
+          <a href="#login" aria-label="Login" className="hidden rounded-full p-2 text-white transition hover:bg-white/10 hover:text-primary sm:inline-flex">
             <User size={18} />
           </a>
-          <a
-            href="https://wa.me/910000000000"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 rounded-full bg-[#25D366] px-4 py-2 text-sm font-medium text-[#062910] transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-          >
+          <a href="https://wa.me/910000000000" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 rounded-full bg-green-600 px-4 py-2 text-sm font-medium text-green-100 transition hover:brightness-105">
             <MessageCircle size={16} />
             <span className="hidden sm:inline">WhatsApp</span>
           </a>
         </div>
       </motion.header>
 
-      {/* Hero copy — swaps with the active category */}
+      {/* Hero copy */}
       <div className="relative z-20 flex h-full max-w-2xl flex-col justify-center gap-5 px-6 md:px-16">
         <AnimatePresence mode="wait">
           <motion.div
@@ -253,26 +204,16 @@ export default function Hero() {
             className="flex flex-col gap-5"
           >
             <div className="flex items-center gap-3">
-              <span className="h-px w-8 bg-[#C9A24B]" />
-              <span className="text-xs font-medium uppercase tracking-[0.28em] text-[#C9A24B]">
-                {active.eyebrow}
-              </span>
+              <span className="h-px w-8 bg-primary" />
+              <span className="text-xs font-medium uppercase tracking-[0.28em] text-primary">{active.eyebrow}</span>
             </div>
-
-            <h1 className="font-[var(--font-display)] text-4xl leading-[1.08] text-[#F3EFE6] sm:text-5xl md:text-6xl">
-              {active.headlineTop}
-              <br />
-              <span className="bg-gradient-to-r from-[#C9A24B] via-[#E8CD8B] to-[#6D5FCF] bg-clip-text text-transparent">
-                {active.headlineAccent}
-              </span>
+            <h1 className="font-[var(--font-display)] text-4xl leading-[1.08] text-white sm:text-5xl md:text-6xl">
+              {active.headlineTop}<br />
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{active.headlineAccent}</span>
             </h1>
-
-            <p className="max-w-md text-base text-[#B8B4AC] md:text-lg">
-              {active.copy}
-            </p>
+            <p className="max-w-md text-base text-neutral-300 md:text-lg">{active.copy}</p>
           </motion.div>
         </AnimatePresence>
-
         <motion.div
           initial={{ y: 12, opacity: 0 }}
           animate={mounted ? { y: 0, opacity: 1 } : {}}
@@ -283,10 +224,9 @@ export default function Hero() {
             href="#collections"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.98 }}
-            className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#C9A24B] to-[#E8CD8B] px-7 py-3 text-sm font-semibold text-[#1A1508] shadow-[0_8px_30px_-8px_rgba(201,162,75,0.6)] transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="flex items-center gap-2 rounded-full bg-primary px-7 py-3 text-sm font-semibold text-neutral-dark shadow-lg transition hover:brightness-105"
           >
-            Explore Collection
-            <span aria-hidden>→</span>
+            Explore Collection <span aria-hidden>→</span>
           </motion.a>
           <motion.a
             href="https://wa.me/910000000000"
@@ -294,40 +234,26 @@ export default function Hero() {
             rel="noopener noreferrer"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.98 }}
-            className="flex items-center gap-2 rounded-full border border-white/25 bg-white/[0.04] px-7 py-3 text-sm font-medium text-[#F3EFE6] backdrop-blur-md transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A24B]"
+            className="flex items-center gap-2 rounded-full border border-white/25 bg-white/[0.04] px-7 py-3 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/10"
           >
-            <MessageCircle size={16} />
-            Get Quote on WhatsApp
+            <MessageCircle size={16} /> Get Quote on WhatsApp
           </motion.a>
         </motion.div>
-
         {/* Trust badges */}
         <motion.div
           initial={{ y: 10, opacity: 0 }}
           animate={mounted ? { y: 0, opacity: 1 } : {}}
           transition={{ duration: 0.6, delay: 0.45 }}
-          className="flex flex-wrap items-center gap-5 pt-1 text-xs text-[#B8B4AC]"
+          className="flex flex-wrap items-center gap-5 pt-1 text-xs text-neutral-300"
         >
-          <span className="flex items-center gap-1.5">
-            <Star size={13} className="fill-[#C9A24B] text-[#C9A24B]" />
-            4.9 Rating
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Truck size={14} />
-            Fast Delivery
-          </span>
-          <span className="flex items-center gap-1.5">
-            <ShieldCheck size={14} />
-            Secure Checkout
-          </span>
-          <span className="flex items-center gap-1.5">
-            <MessageCircle size={14} />
-            WhatsApp Support
-          </span>
+          <span className="flex items-center gap-1.5"><Star size={13} className="fill-primary text-primary" /> 4.9 Rating</span>
+          <span className="flex items-center gap-1.5"><Truck size={14} /> Fast Delivery</span>
+          <span className="flex items-center gap-1.5"><ShieldCheck size={14} /> Secure Checkout</span>
+          <span className="flex items-center gap-1.5"><MessageCircle size={14} /> WhatsApp Support</span>
         </motion.div>
       </div>
 
-      {/* Floating product cards — swap with the active category, gentle idle bob */}
+      {/* Floating product cards */}
       <div className="absolute right-8 top-28 z-20 hidden gap-4 lg:flex">
         <AnimatePresence mode="wait">
           <motion.div
@@ -346,31 +272,19 @@ export default function Hero() {
                 className="w-[168px] rounded-2xl border border-white/10 bg-white/[0.07] p-3 backdrop-blur-xl"
               >
                 <div className="flex items-center justify-between">
-                  <active.icon size={16} className="text-[#C9A24B]" />
-                  <button
-                    type="button"
-                    aria-label={`Add ${product.name} to wishlist`}
-                    className="rounded-full p-1 text-[#D8D5CC] transition hover:bg-white/10 hover:text-[#C9A24B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A24B]"
-                  >
+                  <active.icon size={16} className="text-primary" />
+                  <button type="button" aria-label={`Add ${product.name} to wishlist`} className="rounded-full p-1 text-neutral-300 transition hover:bg-white/10 hover:text-primary">
                     <Heart size={13} />
                   </button>
                 </div>
-                <p className="mt-2 text-xs font-medium leading-tight text-[#F3EFE6]">
-                  {product.name}
-                </p>
+                <p className="mt-2 text-xs font-medium leading-tight text-white">{product.name}</p>
                 <div className="mt-1 flex items-center gap-1.5">
                   <RatingStars rating={product.rating} />
-                  <span className="text-[10px] text-[#9C98A6]">{product.rating}</span>
+                  <span className="text-[10px] text-neutral-400">{product.rating}</span>
                 </div>
                 <div className="mt-2 flex items-center justify-between">
-                  <span className="font-[var(--font-display)] text-sm text-[#C9A24B]">
-                    {product.price}
-                  </span>
-                  <button
-                    type="button"
-                    aria-label={`Add ${product.name} to cart`}
-                    className="rounded-full bg-white/10 p-1.5 text-[#F3EFE6] transition hover:bg-[#C9A24B] hover:text-[#1A1508] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                  >
+                  <span className="font-[var(--font-display)] text-sm text-primary">{product.price}</span>
+                  <button type="button" aria-label={`Add ${product.name} to cart`} className="rounded-full bg-white/10 p-1.5 text-white transition hover:bg-primary hover:text-neutral-dark">
                     <ShoppingCart size={13} />
                   </button>
                 </div>
@@ -380,7 +294,7 @@ export default function Hero() {
         </AnimatePresence>
       </div>
 
-      {/* Signature element: category selector — drives the hero image + copy above */}
+      {/* Category selector */}
       <motion.div
         initial={{ y: 16, opacity: 0 }}
         animate={mounted ? { y: 0, opacity: 1 } : {}}
@@ -391,9 +305,7 @@ export default function Hero() {
         onBlur={startRotation}
         className="absolute bottom-8 right-6 z-20 w-[min(90vw,340px)] rounded-2xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl md:bottom-12 md:right-16"
       >
-        <p className="text-xs uppercase tracking-[0.2em] text-[#9C98A6]">
-          Shop by Category
-        </p>
+        <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">Shop by Category</p>
         <div className="mt-3 flex gap-2">
           {CATEGORIES.map((category, index) => {
             const Icon = category.icon;
@@ -407,16 +319,12 @@ export default function Hero() {
                 whileTap={{ scale: 0.97 }}
                 aria-pressed={isActive}
                 className={`flex flex-1 flex-col items-center gap-1 rounded-xl border px-2 py-3 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
-                  isActive
-                    ? "border-[#C9A24B] bg-[#C9A24B]/10"
-                    : "border-white/10 bg-white/[0.02] hover:border-white/25"
+                  isActive ? "border-primary bg-primary/10" : "border-white/10 bg-white/[0.02] hover:border-white/25"
                 }`}
               >
-                <Icon size={20} className={isActive ? "text-[#C9A24B]" : "text-[#D8D5CC]"} />
-                <span className="text-[11px] leading-tight text-[#F3EFE6]">
-                  {category.label}
-                </span>
-                <span className="text-[9px] text-[#9C98A6]">{category.count}</span>
+                <Icon size={20} className={isActive ? "text-primary" : "text-neutral-300"} />
+                <span className="text-[11px] leading-tight text-white">{category.label}</span>
+                <span className="text-[9px] text-neutral-400">{category.count}</span>
               </motion.button>
             );
           })}
@@ -428,13 +336,10 @@ export default function Hero() {
         initial={{ opacity: 0 }}
         animate={mounted ? { opacity: 1 } : {}}
         transition={{ duration: 0.6, delay: 0.8 }}
-        className="absolute bottom-6 left-1/2 z-20 hidden -translate-x-1/2 flex-col items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-[#9C98A6] xl:flex"
+        className="absolute bottom-6 left-1/2 z-20 hidden -translate-x-1/2 flex-col items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-neutral-500 xl:flex"
       >
         <span>Scroll to Explore</span>
-        <motion.div
-          animate={{ y: [0, 6, 0] }}
-          transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-        >
+        <motion.div animate={{ y: [0, 6, 0] }} transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}>
           <ChevronDown size={16} />
         </motion.div>
       </motion.div>
