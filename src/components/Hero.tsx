@@ -95,10 +95,36 @@ function RatingStars({ rating }: { rating: number }) {
   );
 }
 
+import { useCart } from "@/components/CartContext";
+import { useWishlist } from "@/components/WishlistContext";
 export default function Hero() {
   const [mounted, setMounted] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [hasInteracted, setHasInteracted] = useState(false);
+  // Cart & Wishlist actions for floating product cards
+  const { addItem } = useCart();
+  const { toggleItem, hasItem } = useWishlist();
+
+  const handleAddToCart = (product) => {
+    addItem({
+      productId: product.id,
+      name: product.name,
+      price: parseFloat(product.price.replace(/[^0-9.]/g, "")),
+      image: product.image,
+      quantity: 1,
+    });
+  };
+
+  const handleToggleWishlist = (product) => {
+    toggleItem({
+      productId: product.id,
+      name: product.name,
+      price: parseFloat(product.price.replace(/[^0-9.]/g, "")),
+      image: product.image,
+      quantity: 1,
+    });
+  };
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const active = CATEGORIES[activeIndex];
@@ -273,7 +299,7 @@ export default function Hero() {
               >
                 <div className="flex items-center justify-between">
                   <active.icon size={16} className="text-primary" />
-                  <button type="button" aria-label={`Add ${product.name} to wishlist`} className="rounded-full p-1 text-neutral-300 transition hover:bg-white/10 hover:text-primary">
+                  <button type="button" aria-label={`Add ${product.name} to wishlist`} onClick={() => handleToggleWishlist(product)} className="rounded-full p-1 text-neutral-300 transition hover:bg-white/10 hover:text-primary">
                     <Heart size={13} />
                   </button>
                 </div>

@@ -69,6 +69,7 @@ export default function Navbar() {
             )}
           </Link>
           <Link href="/orders" className={linkClass}>My Orders</Link>
+              <Link href="/contact" className={linkClass}>Contact</Link>
           <button
             onClick={async () => {
               await fetch('/api/auth/logout', { method: 'POST' });
@@ -112,6 +113,7 @@ export default function Navbar() {
             <Link href="/wishlist" className={linkClass} onClick={() => setMobileOpen(false)}>♡ Wishlist</Link>
             <Link href="/cart" className={linkClass} onClick={() => setMobileOpen(false)}>🛒 Cart ({itemCount})</Link>
             <Link href="/orders" className={linkClass} onClick={() => setMobileOpen(false)}>My Orders</Link>
+              <Link href="/contact" className={linkClass} onClick={() => setMobileOpen(false)}>Contact</Link>
           <button
             onClick={async () => {
               await fetch('/api/auth/logout', { method: 'POST' });
