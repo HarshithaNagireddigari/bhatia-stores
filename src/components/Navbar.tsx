@@ -71,6 +71,16 @@ export default function Navbar() {
           <Link href="/orders" className={linkClass}>My Orders</Link>
           <Link href="/admin" className={linkClass}>Admin</Link>
           <button
+            onClick={async () => {
+              await fetch('/api/auth/logout', { method: 'POST' });
+              router.push('/login');
+              router.refresh();
+            }}
+            className={linkClass}
+          >
+            Logout
+          </button>
+          <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             className="rounded-full p-2 text-gray-600 hover:text-primary"
             aria-label="Toggle theme"
@@ -118,6 +128,16 @@ export default function Navbar() {
             <Link href="/cart" className={linkClass} onClick={() => setMobileOpen(false)}>🛒 Cart ({itemCount})</Link>
             <Link href="/orders" className={linkClass} onClick={() => setMobileOpen(false)}>My Orders</Link>
             <Link href="/admin" className={linkClass} onClick={() => setMobileOpen(false)}>Admin</Link>
+          <button
+            onClick={async () => {
+              await fetch('/api/auth/logout', { method: 'POST' });
+              router.push('/login');
+              router.refresh();
+            }}
+            className={linkClass}
+          >
+            Logout
+          </button>
           </div>
         </div>
       )}

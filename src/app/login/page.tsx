@@ -132,13 +132,6 @@ export default function LoginPage() {
           </Link>
         </p>
 
-        <div className="mt-4 rounded-lg bg-gray-50 p-3 dark:bg-gray-900">
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            <strong>Demo Admin:</strong> admin@bhatia.com / admin123
-            <br />
-            <strong>Demo Customer:</strong> user@bhatia.com / user123
-          </p>
-        </div>
       </div>
     </div>
   );
