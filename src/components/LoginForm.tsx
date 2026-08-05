@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
@@ -24,7 +24,6 @@ export default function LoginForm() {
   }
 
   // Load captcha on mount
-  import { useEffect } from "react";
   useEffect(() => {
     loadCaptcha();
   }, []);
