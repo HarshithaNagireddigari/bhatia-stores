@@ -18,11 +18,11 @@ interface Props {
 }
 
 export default function ProductCard({ product }: Props) {
-  const { addProductToCart } = useCart();
+  const { addItem } = useCart();
   const { toggleItem, hasItem } = useWishlist();
 
   const handleAddToCart = () => {
-    addProductToCart({
+    addItem({
       productId: product.id,
       name: product.name,
       price: parseFloat(product.price.replace(/[^0-9.]/g, "")),
