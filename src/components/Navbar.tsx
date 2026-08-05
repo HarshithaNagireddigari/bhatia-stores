@@ -69,7 +69,6 @@ export default function Navbar() {
             )}
           </Link>
           <Link href="/orders" className={linkClass}>My Orders</Link>
-          <Link href="/admin" className={linkClass}>Admin</Link>
           <button
             onClick={async () => {
               await fetch('/api/auth/logout', { method: 'POST' });
@@ -80,24 +79,10 @@ export default function Navbar() {
           >
             Logout
           </button>
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="rounded-full p-2 text-gray-600 hover:text-primary"
-            aria-label="Toggle theme"
-          >
-            {theme === "dark" ? "🌙" : "☀️"}
-          </button>
         </div>
 
         {/* Mobile hamburger */}
         <div className="flex items-center gap-2 md:hidden">
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="rounded-full p-2 text-gray-600"
-            aria-label="Toggle theme"
-          >
-            {theme === "dark" ? "🌙" : "☀️"}
-          </button>
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className="rounded p-1 text-gray-600"
@@ -127,7 +112,6 @@ export default function Navbar() {
             <Link href="/wishlist" className={linkClass} onClick={() => setMobileOpen(false)}>♡ Wishlist</Link>
             <Link href="/cart" className={linkClass} onClick={() => setMobileOpen(false)}>🛒 Cart ({itemCount})</Link>
             <Link href="/orders" className={linkClass} onClick={() => setMobileOpen(false)}>My Orders</Link>
-            <Link href="/admin" className={linkClass} onClick={() => setMobileOpen(false)}>Admin</Link>
           <button
             onClick={async () => {
               await fetch('/api/auth/logout', { method: 'POST' });
