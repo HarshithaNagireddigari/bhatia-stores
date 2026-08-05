@@ -1,4 +1,5 @@
 type OrderEmail = {
+  phone: string;
   id: string;
   customerName: string;
   customerEmail: string;
@@ -32,6 +33,8 @@ async function sendEmail(to: string, subject: string, html: string, text: string
     throw new Error(`Resend rejected the email (${response.status}): ${await response.text()}`);
   }
 }
+
+import { sendWhatsApp } from "./whatsapp";
 
 export async function sendOrderNotifications(order: OrderEmail) {
   const adminEmail = process.env.ORDER_NOTIFICATION_EMAIL;
