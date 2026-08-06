@@ -105,7 +105,7 @@ export default function Hero() {
   const { addItem } = useCart();
   const { toggleItem, hasItem } = useWishlist();
 
-  const handleAddToCart = (product) => {
+  const handleAddToCart = (product: any) => {
     addItem({
       productId: product.id,
       name: product.name,
@@ -115,7 +115,7 @@ export default function Hero() {
     });
   };
 
-  const handleToggleWishlist = (product) => {
+  const handleToggleWishlist = (product: any) => {
     toggleItem({
       productId: product.id,
       name: product.name,

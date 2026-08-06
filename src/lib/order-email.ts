@@ -34,7 +34,7 @@ async function sendEmail(to: string, subject: string, html: string, text: string
   }
 }
 
-import { sendWhatsApp } from "./whatsapp";
+// import { sendWhatsApp } from "./whatsapp"; // Removed unused import
 
 export async function sendOrderNotifications(order: OrderEmail) {
   const adminEmail = process.env.ORDER_NOTIFICATION_EMAIL;

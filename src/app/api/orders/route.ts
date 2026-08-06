@@ -145,6 +145,7 @@ export async function POST(req: Request) {
       id: orderId,
       customerName,
       customerEmail,
+      phone,
       total: total.toString(),
       paymentMethod,
       items: verifiedItems.map(({ product, quantity }) => ({ productName: product.name, quantity, price: product.price })),
